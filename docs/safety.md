@@ -32,6 +32,19 @@ Names such as `uriSchemeAuthenticationToken` are schema identifiers, not secret 
 
 Future write work requires independent scope/authorization, exact source binding, transaction/concurrency control, fail-closed compatibility checks, preserved unknown state, rollback and verified readback. Any remote side effect needs its own receipt and recovery boundary.
 
+## Separate copy-only experiment
+
+The [experimental wording adapter](experimental-copy-wording.md) is distinct
+from the read-only catalog recipe. It accepts only explicitly supplied detached
+private snapshots, creates owned backups, invokes an independently built helper
+under a deny-network sandbox, and releases only a digest-bound candidate copy.
+It finalizes journal mode only on its new backup destination, never on the
+supplier/source. It has no live publisher or cloud route. Same-target note
+representation requires the narrowly witnessed empty-root/single-prior subset,
+not a generic base-loss exemption. Known supplier lifecycle is rechecked across
+imports; a complete filename alone never releases an interrupted output.
+Frozen failures and quarantines must not be cleared or reused as approved input.
+
 ## Evidence retained privately
 
 The catalog review retains the executed query trace, app-plist provenance, raw structural capture, before/after source hashes, reproducibility checks and publication-audit results outside the repository under restricted permissions. No live application payloads were queried for this catalog; the one `Meta.databaseVersion` lookup is explicitly allowlisted. This is not a test of native writes, synchronization or UI behavior.

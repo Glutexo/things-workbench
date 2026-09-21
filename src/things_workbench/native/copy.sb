@@ -1,0 +1,13 @@
+(version 1)
+(allow default)
+(deny network*)
+(deny appleevent-send)
+(deny process-fork)
+(deny file-read*)
+(deny file-write*)
+; Metadata traversal is not a grant to read user file contents.
+(allow file-read-metadata)
+(allow file-read* (literal "/") (subpath "/private/etc"))
+(allow file-read* (subpath "/System") (subpath "/usr/lib") (subpath "/usr/share") (literal "/usr/bin/env") (subpath "/Library/Apple") (subpath "/private/var/db/dyld") (literal "/dev/null") (literal "/dev/random") (literal "/dev/urandom") (subpath (param "APP")) (subpath (param "RUNTIME")) (subpath (param "WORK")) (literal (param "PLAN")) (literal (param "SCHEMA")))
+(allow file-write* (subpath (param "WORK")))
+(deny mach-lookup (global-name "com.apple.coreservices.launchservicesd") (global-name "com.apple.securityd") (global-name "com.apple.security.agent") (global-name "com.apple.security.authhost"))

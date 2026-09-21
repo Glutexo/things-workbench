@@ -1,6 +1,6 @@
 # Support matrix
 
-**Public scope: read-only.** This matrix distinguishes documentation evidence from executable feature support. It does not inherit acceptance from a separate private tool. Consult package tests and CLI help for the exact implemented commands; the documentation recipe is independently reproducible and uses no package internals.
+**Supported scope: read-only; separate bounded copy-only experiment.** This matrix distinguishes documentation evidence from executable feature support. It does not inherit acceptance from a separate private tool. Consult package tests, CLI help and the [copy experiment evidence boundary](experimental-copy-wording.md); the structural documentation recipe is independently reproducible and uses no package internals.
 
 | Operation / claim | Public status | Evidence boundary |
 | --- | --- | --- |
@@ -11,9 +11,9 @@
 | Decode packed date in scoped task fields | Source-reviewed semantics; synthetic arithmetic check | P-DATE; not an all-fields decoder or native test |
 | List/show user tasks through the public package | Not certified by this documentation exercise | Requires package-specific tests; do not infer from physical inventory |
 | Explain all enum values, BLOB grammars and migrations | Unsupported | Explicit unknowns retained |
-| Prepare a native mutation on a copy | Unsupported in initial public scope | Private predecessor is background evidence only |
+| Prepare/preview/digest-approved wording output on an owned copy | Experimental, independent release review separate | Title/notes/both/empty/boundary; same-target note representation limited to verified empty-root/single-prior lineage and product-generated native witness |
 | Publish a live database change | Unsupported | No public write adapter/acceptance established here |
-| Stage native synchronization history | Unsupported | SQL changes are not native staging |
+| Stage native synchronization history | Narrow copy experiment exercised; general support incomplete | Actual local native stages and full metadata retention checked; unknown coalescing refuses; no remote ACK |
 | Contact Things Cloud / obtain remote ACK | Unsupported | No credentials/network/native helper used here |
 | Verify cloud readback or another device | Unsupported | No public end-to-end proof |
 | Automatic recurring-task generation, repair or migration | Unsupported | No scheduler or mutation authorization |

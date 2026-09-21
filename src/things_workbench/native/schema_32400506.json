@@ -1,0 +1,266 @@
+{
+  "build": "32400506",
+  "database_version": 29,
+  "format_version": 1,
+  "headers": {
+    "application_id": 0,
+    "auto_vacuum": 0,
+    "encoding": "UTF-8",
+    "page_size": 4096,
+    "user_version": 0
+  },
+  "schema": [
+    [
+      "index",
+      "index_BSSpotlightDirtyEntity_expansionCursor",
+      "BSSpotlightDirtyEntity",
+      "CREATE INDEX \"index_BSSpotlightDirtyEntity_expansionCursor\"\n    ON BSSpotlightDirtyEntity (\"entityType\", \"id\")\n    WHERE \"expansionCursor\" IS NOT NULL"
+    ],
+    [
+      "index",
+      "index_TMAreaTag_areas",
+      "TMAreaTag",
+      "CREATE INDEX index_TMAreaTag_areas ON TMAreaTag (areas)"
+    ],
+    [
+      "index",
+      "index_TMChecklistItem_task",
+      "TMChecklistItem",
+      "CREATE INDEX index_TMChecklistItem_task ON TMChecklistItem (task)"
+    ],
+    [
+      "index",
+      "index_TMTaskTag_tasks",
+      "TMTaskTag",
+      "CREATE INDEX index_TMTaskTag_tasks ON TMTaskTag (tasks)"
+    ],
+    [
+      "index",
+      "index_TMTask_area",
+      "TMTask",
+      "CREATE INDEX index_TMTask_area ON TMTask(area)"
+    ],
+    [
+      "index",
+      "index_TMTask_heading",
+      "TMTask",
+      "CREATE INDEX index_TMTask_heading ON TMTask(heading)"
+    ],
+    [
+      "index",
+      "index_TMTask_id_where_recurrenceRuleNotNull",
+      "TMTask",
+      "CREATE INDEX index_TMTask_id_where_recurrenceRuleNotNull\n    ON TMTask (uuid)\n    WHERE rt1_recurrenceRule IS NOT NULL"
+    ],
+    [
+      "index",
+      "index_TMTask_project",
+      "TMTask",
+      "CREATE INDEX index_TMTask_project ON TMTask(project)"
+    ],
+    [
+      "index",
+      "index_TMTask_repeatingTemplate_and_creationDate",
+      "TMTask",
+      "CREATE INDEX index_TMTask_repeatingTemplate_and_creationDate\n    ON TMTask(rt1_repeatingTemplate, creationDate)"
+    ],
+    [
+      "index",
+      "index_TMTask_stopDate",
+      "TMTask",
+      "CREATE INDEX index_TMTask_stopDate ON TMTask(stopDate)"
+    ],
+    [
+      "index",
+      "index_TMTask_userModificationDate",
+      "TMTask",
+      "CREATE INDEX index_TMTask_userModificationDate ON TMTask(userModificationDate)"
+    ],
+    [
+      "index",
+      "index_TMTombstone_deletedObjectUUID",
+      "TMTombstone",
+      "CREATE INDEX index_TMTombstone_deletedObjectUUID ON TMTombstone (deletedObjectUUID)"
+    ],
+    [
+      "index",
+      "sqlite_autoindex_BSSyncronyMetadata_1",
+      "BSSyncronyMetadata",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_Meta_1",
+      "Meta",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMArea_1",
+      "TMArea",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMChecklistItem_1",
+      "TMChecklistItem",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMContact_1",
+      "TMContact",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMMetaItem_1",
+      "TMMetaItem",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMSettings_1",
+      "TMSettings",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMSmartList_1",
+      "TMSmartList",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMTag_1",
+      "TMTag",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMTask_1",
+      "TMTask",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_TMTombstone_1",
+      "TMTombstone",
+      null
+    ],
+    [
+      "index",
+      "sqlite_autoindex_ThingsTouch_ExtensionCommandStore_Meta_1",
+      "ThingsTouch_ExtensionCommandStore_Meta",
+      null
+    ],
+    [
+      "table",
+      "BSSpotlightDirtyEntity",
+      "BSSpotlightDirtyEntity",
+      "CREATE TABLE BSSpotlightDirtyEntity (\n\n    \"entityType\"        INTEGER NOT NULL,\n    \"id\"                BLOB NOT NULL,\n    \"changeToken\"       BLOB NOT NULL,\n    \"expansionCursor\"   BLOB,\n\n    PRIMARY KEY (\"entityType\", \"id\")\n\n) WITHOUT ROWID"
+    ],
+    [
+      "table",
+      "BSSpotlightIndexState",
+      "BSSpotlightIndexState",
+      "CREATE TABLE BSSpotlightIndexState (\n\n    \"id\"                          INTEGER PRIMARY KEY CHECK (\"id\" = 1),\n    \"updateState\"                 INTEGER NOT NULL,\n    \"isEnabled\"                   INTEGER NOT NULL DEFAULT 0,\n    \"wholeIndexUpdateToken\"       BLOB NOT NULL,\n    \"wholeIndexExpansionCursor\"   BLOB,\n    \"staticEntitiesUpdateToken\"   BLOB,\n    \"lastCheckpointID\"            BLOB\n)"
+    ],
+    [
+      "table",
+      "BSSyncronyMetadata",
+      "BSSyncronyMetadata",
+      "CREATE TABLE \"BSSyncronyMetadata\" (          'uuid'                 TEXT PRIMARY KEY,               'value'                BLOB                            )"
+    ],
+    [
+      "table",
+      "Meta",
+      "Meta",
+      "CREATE TABLE 'Meta' (                    'key'                 TEXT PRIMARY KEY,                'value'               TEXT                             )"
+    ],
+    [
+      "table",
+      "TMArea",
+      "TMArea",
+      "CREATE TABLE 'TMArea' (                  'uuid'                 TEXT PRIMARY KEY,               'title'                TEXT,                           'visible'              INTEGER,                        'index'                INTEGER                         , 'cachedTags' BLOB, experimental BLOB)"
+    ],
+    [
+      "table",
+      "TMAreaTag",
+      "TMAreaTag",
+      "CREATE TABLE 'TMAreaTag' (                                                     'areas'                TEXT NOT NULL,                                                        'tags'                 TEXT NOT NULL                                                         )"
+    ],
+    [
+      "table",
+      "TMChecklistItem",
+      "TMChecklistItem",
+      "CREATE TABLE 'TMChecklistItem' (                                                 'uuid'                 TEXT PRIMARY KEY,                                                       'userModificationDate' REAL,                                                                   'creationDate'         REAL,                                                                   'title'                TEXT,                                                                   'status'               INTEGER,                                                                'stopDate'             REAL,                                                                   'index'                INTEGER,                                                                'task'                 TEXT                                                                    , 'leavesTombstone' INTEGER, experimental BLOB)"
+    ],
+    [
+      "table",
+      "TMContact",
+      "TMContact",
+      "CREATE TABLE 'TMContact' (               'uuid'                 TEXT PRIMARY KEY,               'displayName'          TEXT,                           'firstName'            TEXT,                           'lastName'             TEXT,                           'emails'               TEXT,                           'appleAddressBookId'   TEXT,                           'index'                INTEGER                         )"
+    ],
+    [
+      "table",
+      "TMMetaItem",
+      "TMMetaItem",
+      "CREATE TABLE 'TMMetaItem' (              'uuid'                 TEXT PRIMARY KEY,               'value'                BLOB                            )"
+    ],
+    [
+      "table",
+      "TMSettings",
+      "TMSettings",
+      "CREATE TABLE 'TMSettings' (                 'uuid'                 TEXT PRIMARY KEY,                  'logInterval'          INTEGER,                           'manualLogDate'        REAL                               , 'groupTodayByParent' INTEGER, 'uriSchemeAuthenticationToken' TEXT, experimental BLOB)"
+    ],
+    [
+      "table",
+      "TMSmartList",
+      "TMSmartList",
+      "CREATE TABLE TMSmartList (\n\n        \"uuid\"          TEXT PRIMARY KEY,\n\n        \"title\"         TEXT,\n        \"index\"         INTEGER,\n        \"definition\"    BLOB,\n\n        \"experimental\"  BLOB\n    )"
+    ],
+    [
+      "table",
+      "TMTag",
+      "TMTag",
+      "CREATE TABLE 'TMTag' (                   'uuid'                 TEXT PRIMARY KEY,               'title'                TEXT,                           'shortcut'             TEXT,                           'usedDate'             REAL,                           'parent'               TEXT,                           'index'                INTEGER                         , experimental BLOB)"
+    ],
+    [
+      "table",
+      "TMTask",
+      "TMTask",
+      "CREATE TABLE TMTask (\n\n        \"uuid\"                              TEXT PRIMARY KEY,\n        \"leavesTombstone\"                   INTEGER,\n\n        \"creationDate\"                      REAL,\n        \"userModificationDate\"              REAL,\n\n        \"type\"                              INTEGER,\n\n        \"status\"                            INTEGER,\n        \"stopDate\"                          REAL,\n\n        \"trashed\"                           INTEGER,\n\n        \"title\"                             TEXT,\n        \"notes\"                             TEXT,\n        \"notesSync\"                         INTEGER,\n\n        \"cachedTags\"                        BLOB,\n\n        \"start\"                             INTEGER,\n        \"startDate\"                         INTEGER,   -- REAL -> INTEGER\n        \"startBucket\"                       INTEGER,\n        \"reminderTime\"                      INTEGER,\n        \"lastReminderInteractionDate\"       REAL,      -- Renamed from \"lastAlarmInteractionDate\"\n\n        \"deadline\"                          INTEGER,   -- Renamed from \"dueDate\", REAL -> INTEGER\n        \"deadlineSuppressionDate\"           INTEGER,   -- Renamed from \"dueDateSuppressionDate\", REAL -> INTEGER\n        \"t2_deadlineOffset\"                 INTEGER,   -- Renamed from \"dueDateOffset\"\n\n        \"index\"                             INTEGER,\n        \"todayIndex\"                        INTEGER,\n        \"todayIndexReferenceDate\"           INTEGER,   -- REAL -> INTEGER\n\n        \"area\"                              TEXT,\n        \"project\"                           TEXT,\n        \"heading\"                           TEXT,      -- Renamed from \"actionGroup\"\n        \"contact\"                           TEXT,      -- Renamed from \"delegate\"\n\n        \"untrashedLeafActionsCount\"         INTEGER,\n        \"openUntrashedLeafActionsCount\"     INTEGER,\n\n        \"checklistItemsCount\"               INTEGER,\n        \"openChecklistItemsCount\"           INTEGER,\n\n        \"rt1_repeatingTemplate\"             TEXT,      -- Renamed from \"repeatingTemplate\"\n        \"rt1_recurrenceRule\"                BLOB,      -- Renamed from \"recurrenceRule\"\n        \"rt1_instanceCreationStartDate\"     INTEGER,   -- Renamed from \"instanceCreationStartDate\", REAL -> INTEGER\n        \"rt1_instanceCreationPaused\"        INTEGER,   -- Renamed from \"instanceCreationPaused\"\n        \"rt1_instanceCreationCount\"         INTEGER,   -- Renamed from \"instanceCreationCount\"\n        \"rt1_afterCompletionReferenceDate\"  INTEGER,   -- Renamed from \"afterCompletionReferenceDate\", REAL -> INTEGER\n        \"rt1_nextInstanceStartDate\"         INTEGER,   -- Renamed from \"nextInstanceStartDate\", REAL -> INTEGER\n\n        \"experimental\"                      BLOB,\n\n        \"repeater\"                          BLOB,\n        \"repeaterMigrationDate\"             REAL\n    )"
+    ],
+    [
+      "table",
+      "TMTaskTag",
+      "TMTaskTag",
+      "CREATE TABLE 'TMTaskTag' (                                                     'tasks'                TEXT NOT NULL,                                                        'tags'                 TEXT NOT NULL                                                         )"
+    ],
+    [
+      "table",
+      "TMTombstone",
+      "TMTombstone",
+      "CREATE TABLE 'TMTombstone' (                                                            'uuid'          TEXT PRIMARY KEY,                                                                 'deletionDate'  REAL,                                                                             'deletedObjectUUID' TEXT                                                                      )"
+    ],
+    [
+      "table",
+      "ThingsTouch_ExtensionCommandStore_Commands",
+      "ThingsTouch_ExtensionCommandStore_Commands",
+      "CREATE TABLE \"ThingsTouch_ExtensionCommandStore_Commands\" (\n\"id\" INTEGER PRIMARY KEY AUTOINCREMENT,\n\"type\" TEXT,\n\"body\" BLOB\n)"
+    ],
+    [
+      "table",
+      "ThingsTouch_ExtensionCommandStore_Meta",
+      "ThingsTouch_ExtensionCommandStore_Meta",
+      "CREATE TABLE \"ThingsTouch_ExtensionCommandStore_Meta\" (\n\"key\" TEXT PRIMARY KEY,\n\"value\" BLOB\n)"
+    ],
+    [
+      "table",
+      "sqlite_sequence",
+      "sqlite_sequence",
+      "CREATE TABLE sqlite_sequence(name,seq)"
+    ]
+  ]
+}

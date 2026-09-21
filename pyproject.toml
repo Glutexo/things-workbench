@@ -15,3 +15,6 @@ things-workbench = "things_workbench.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["things_workbench*"]
+
+[tool.setuptools.package-data]
+things_workbench = ["native/*.m", "native/*.h", "native/*.swift", "native/*.c", "native/*.sb", "native/*.json"]

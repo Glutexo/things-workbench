@@ -24,6 +24,10 @@ def _json_value(value):
 
 
 def main(argv=None):
+    args_list = list(sys.argv[1:] if argv is None else argv)
+    if args_list and args_list[0] in ('copies', 'wording', 'native'):
+        from .copy_cli import main as copy_main
+        return copy_main(args_list)
     parser = argparse.ArgumentParser(prog='things-workbench', description='Read-only SQLite inspection; no writes, repair or sync.')
     parser.add_argument('--db', required=True, help='Explicit existing SQLite database file (no discovery).')
     parser.add_argument('--timeout', type=float, default=5.0, help='Cooperative inspection time budget, 0 < seconds <= 60 (default: 5).')

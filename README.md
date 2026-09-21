@@ -2,7 +2,7 @@
 
 An independent toolkit for understanding and working with Things databases without launching the app.
 
-**Status: early read-only implementation.** Includes a Python library, a command-line inspector and a versioned physical database catalog. No write, repair, migration or cloud-sync API is provided. This is not a replacement for Things.
+**Status: read-only inspection plus a bounded copy-only experiment.** Includes a Python library, command-line inspector and versioned physical database catalog. The separate [experimental native wording adapter](docs/experimental-copy-wording.md) handles digest-approved local copies. Same-target notes have only a narrowly native-witnessed empty-root/single-prior representation; unknown history still refuses. It is **not general write or synchronization support**, and independent release review remains separate. No live publication, repair, migration or cloud-sync API is provided. This is not a replacement for Things.
 
 ## Install from source
 
@@ -73,7 +73,7 @@ The initial implementation was exercised on Python 3.11 and 3.14, including inst
 
 ## Safety and privacy
 
-SQLite connections use `mode=ro`, `query_only`, ordinary WAL-aware locking and bounded read transactions. No `immutable` shortcut, writable fallback, checkpoint or repair is performed. This is SQL read-only behavior, **not** a guarantee of zero filesystem effects: SQLite may use shared-memory reader marks, locks or sidecars. Keep originals and use a consistent private backup for research. Do not copy only `main.sqlite` away from an active WAL and assume the copy is current.
+Inspection connections use `mode=ro`, `query_only`, ordinary WAL-aware locking and bounded read transactions. Inspection has no `immutable` shortcut, writable fallback, checkpoint or repair. This is SQL read-only behavior, **not** a guarantee of zero filesystem effects: SQLite may use shared-memory reader marks, locks or sidecars. The separate opt-in copy experiment writes only newly owned backup destinations and native candidates; it never checkpoints its supplied source. Keep originals and use a consistent private backup for research. Do not copy only `main.sqlite` away from an active WAL and assume the copy is current.
 
 Never commit databases, sidecars, account settings, authentication material, raw synchronization payloads, personal task content or private execution records. `.gitignore` is a guardrail, not a privacy audit. Every export needs review before publication, including DDL/defaults.
 
