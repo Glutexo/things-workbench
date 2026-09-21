@@ -1,0 +1,2229 @@
+{
+  "application": {
+    "build": "32400506",
+    "name": "Things",
+    "platform": "macOS",
+    "version": "3.24"
+  },
+  "catalog_format_version": 1,
+  "database_format": {
+    "source": "Meta.value for the single key databaseVersion; decoded plist integer",
+    "version": 29
+  },
+  "objects": [
+    {
+      "name": "index_BSSpotlightDirtyEntity_expansionCursor",
+      "sql": "CREATE INDEX \"index_BSSpotlightDirtyEntity_expansionCursor\"\n    ON BSSpotlightDirtyEntity (\"entityType\", \"id\")\n    WHERE \"expansionCursor\" IS NOT NULL",
+      "tbl_name": "BSSpotlightDirtyEntity",
+      "type": "index"
+    },
+    {
+      "name": "index_TMAreaTag_areas",
+      "sql": "CREATE INDEX index_TMAreaTag_areas ON TMAreaTag (areas)",
+      "tbl_name": "TMAreaTag",
+      "type": "index"
+    },
+    {
+      "name": "index_TMChecklistItem_task",
+      "sql": "CREATE INDEX index_TMChecklistItem_task ON TMChecklistItem (task)",
+      "tbl_name": "TMChecklistItem",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTaskTag_tasks",
+      "sql": "CREATE INDEX index_TMTaskTag_tasks ON TMTaskTag (tasks)",
+      "tbl_name": "TMTaskTag",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTask_area",
+      "sql": "CREATE INDEX index_TMTask_area ON TMTask(area)",
+      "tbl_name": "TMTask",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTask_heading",
+      "sql": "CREATE INDEX index_TMTask_heading ON TMTask(heading)",
+      "tbl_name": "TMTask",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTask_id_where_recurrenceRuleNotNull",
+      "sql": "CREATE INDEX index_TMTask_id_where_recurrenceRuleNotNull\n    ON TMTask (uuid)\n    WHERE rt1_recurrenceRule IS NOT NULL",
+      "tbl_name": "TMTask",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTask_project",
+      "sql": "CREATE INDEX index_TMTask_project ON TMTask(project)",
+      "tbl_name": "TMTask",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTask_repeatingTemplate_and_creationDate",
+      "sql": "CREATE INDEX index_TMTask_repeatingTemplate_and_creationDate\n    ON TMTask(rt1_repeatingTemplate, creationDate)",
+      "tbl_name": "TMTask",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTask_stopDate",
+      "sql": "CREATE INDEX index_TMTask_stopDate ON TMTask(stopDate)",
+      "tbl_name": "TMTask",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTask_userModificationDate",
+      "sql": "CREATE INDEX index_TMTask_userModificationDate ON TMTask(userModificationDate)",
+      "tbl_name": "TMTask",
+      "type": "index"
+    },
+    {
+      "name": "index_TMTombstone_deletedObjectUUID",
+      "sql": "CREATE INDEX index_TMTombstone_deletedObjectUUID ON TMTombstone (deletedObjectUUID)",
+      "tbl_name": "TMTombstone",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_BSSyncronyMetadata_1",
+      "sql": null,
+      "tbl_name": "BSSyncronyMetadata",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_Meta_1",
+      "sql": null,
+      "tbl_name": "Meta",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMArea_1",
+      "sql": null,
+      "tbl_name": "TMArea",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMChecklistItem_1",
+      "sql": null,
+      "tbl_name": "TMChecklistItem",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMContact_1",
+      "sql": null,
+      "tbl_name": "TMContact",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMMetaItem_1",
+      "sql": null,
+      "tbl_name": "TMMetaItem",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMSettings_1",
+      "sql": null,
+      "tbl_name": "TMSettings",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMSmartList_1",
+      "sql": null,
+      "tbl_name": "TMSmartList",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMTag_1",
+      "sql": null,
+      "tbl_name": "TMTag",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMTask_1",
+      "sql": null,
+      "tbl_name": "TMTask",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_TMTombstone_1",
+      "sql": null,
+      "tbl_name": "TMTombstone",
+      "type": "index"
+    },
+    {
+      "name": "sqlite_autoindex_ThingsTouch_ExtensionCommandStore_Meta_1",
+      "sql": null,
+      "tbl_name": "ThingsTouch_ExtensionCommandStore_Meta",
+      "type": "index"
+    },
+    {
+      "name": "BSSpotlightDirtyEntity",
+      "sql": "CREATE TABLE BSSpotlightDirtyEntity (\n\n    \"entityType\"        INTEGER NOT NULL,\n    \"id\"                BLOB NOT NULL,\n    \"changeToken\"       BLOB NOT NULL,\n    \"expansionCursor\"   BLOB,\n\n    PRIMARY KEY (\"entityType\", \"id\")\n\n) WITHOUT ROWID",
+      "tbl_name": "BSSpotlightDirtyEntity",
+      "type": "table"
+    },
+    {
+      "name": "BSSpotlightIndexState",
+      "sql": "CREATE TABLE BSSpotlightIndexState (\n\n    \"id\"                          INTEGER PRIMARY KEY CHECK (\"id\" = 1),\n    \"updateState\"                 INTEGER NOT NULL,\n    \"isEnabled\"                   INTEGER NOT NULL DEFAULT 0,\n    \"wholeIndexUpdateToken\"       BLOB NOT NULL,\n    \"wholeIndexExpansionCursor\"   BLOB,\n    \"staticEntitiesUpdateToken\"   BLOB,\n    \"lastCheckpointID\"            BLOB\n)",
+      "tbl_name": "BSSpotlightIndexState",
+      "type": "table"
+    },
+    {
+      "name": "BSSyncronyMetadata",
+      "sql": "CREATE TABLE \"BSSyncronyMetadata\" (          'uuid'                 TEXT PRIMARY KEY,               'value'                BLOB                            )",
+      "tbl_name": "BSSyncronyMetadata",
+      "type": "table"
+    },
+    {
+      "name": "Meta",
+      "sql": "CREATE TABLE 'Meta' (                    'key'                 TEXT PRIMARY KEY,                'value'               TEXT                             )",
+      "tbl_name": "Meta",
+      "type": "table"
+    },
+    {
+      "name": "TMArea",
+      "sql": "CREATE TABLE 'TMArea' (                  'uuid'                 TEXT PRIMARY KEY,               'title'                TEXT,                           'visible'              INTEGER,                        'index'                INTEGER                         , 'cachedTags' BLOB, experimental BLOB)",
+      "tbl_name": "TMArea",
+      "type": "table"
+    },
+    {
+      "name": "TMAreaTag",
+      "sql": "CREATE TABLE 'TMAreaTag' (                                                     'areas'                TEXT NOT NULL,                                                        'tags'                 TEXT NOT NULL                                                         )",
+      "tbl_name": "TMAreaTag",
+      "type": "table"
+    },
+    {
+      "name": "TMChecklistItem",
+      "sql": "CREATE TABLE 'TMChecklistItem' (                                                 'uuid'                 TEXT PRIMARY KEY,                                                       'userModificationDate' REAL,                                                                   'creationDate'         REAL,                                                                   'title'                TEXT,                                                                   'status'               INTEGER,                                                                'stopDate'             REAL,                                                                   'index'                INTEGER,                                                                'task'                 TEXT                                                                    , 'leavesTombstone' INTEGER, experimental BLOB)",
+      "tbl_name": "TMChecklistItem",
+      "type": "table"
+    },
+    {
+      "name": "TMContact",
+      "sql": "CREATE TABLE 'TMContact' (               'uuid'                 TEXT PRIMARY KEY,               'displayName'          TEXT,                           'firstName'            TEXT,                           'lastName'             TEXT,                           'emails'               TEXT,                           'appleAddressBookId'   TEXT,                           'index'                INTEGER                         )",
+      "tbl_name": "TMContact",
+      "type": "table"
+    },
+    {
+      "name": "TMMetaItem",
+      "sql": "CREATE TABLE 'TMMetaItem' (              'uuid'                 TEXT PRIMARY KEY,               'value'                BLOB                            )",
+      "tbl_name": "TMMetaItem",
+      "type": "table"
+    },
+    {
+      "name": "TMSettings",
+      "sql": "CREATE TABLE 'TMSettings' (                 'uuid'                 TEXT PRIMARY KEY,                  'logInterval'          INTEGER,                           'manualLogDate'        REAL                               , 'groupTodayByParent' INTEGER, 'uriSchemeAuthenticationToken' TEXT, experimental BLOB)",
+      "tbl_name": "TMSettings",
+      "type": "table"
+    },
+    {
+      "name": "TMSmartList",
+      "sql": "CREATE TABLE TMSmartList (\n\n        \"uuid\"          TEXT PRIMARY KEY,\n\n        \"title\"         TEXT,\n        \"index\"         INTEGER,\n        \"definition\"    BLOB,\n\n        \"experimental\"  BLOB\n    )",
+      "tbl_name": "TMSmartList",
+      "type": "table"
+    },
+    {
+      "name": "TMTag",
+      "sql": "CREATE TABLE 'TMTag' (                   'uuid'                 TEXT PRIMARY KEY,               'title'                TEXT,                           'shortcut'             TEXT,                           'usedDate'             REAL,                           'parent'               TEXT,                           'index'                INTEGER                         , experimental BLOB)",
+      "tbl_name": "TMTag",
+      "type": "table"
+    },
+    {
+      "name": "TMTask",
+      "sql": "CREATE TABLE TMTask (\n\n        \"uuid\"                              TEXT PRIMARY KEY,\n        \"leavesTombstone\"                   INTEGER,\n\n        \"creationDate\"                      REAL,\n        \"userModificationDate\"              REAL,\n\n        \"type\"                              INTEGER,\n\n        \"status\"                            INTEGER,\n        \"stopDate\"                          REAL,\n\n        \"trashed\"                           INTEGER,\n\n        \"title\"                             TEXT,\n        \"notes\"                             TEXT,\n        \"notesSync\"                         INTEGER,\n\n        \"cachedTags\"                        BLOB,\n\n        \"start\"                             INTEGER,\n        \"startDate\"                         INTEGER,   -- REAL -> INTEGER\n        \"startBucket\"                       INTEGER,\n        \"reminderTime\"                      INTEGER,\n        \"lastReminderInteractionDate\"       REAL,      -- Renamed from \"lastAlarmInteractionDate\"\n\n        \"deadline\"                          INTEGER,   -- Renamed from \"dueDate\", REAL -> INTEGER\n        \"deadlineSuppressionDate\"           INTEGER,   -- Renamed from \"dueDateSuppressionDate\", REAL -> INTEGER\n        \"t2_deadlineOffset\"                 INTEGER,   -- Renamed from \"dueDateOffset\"\n\n        \"index\"                             INTEGER,\n        \"todayIndex\"                        INTEGER,\n        \"todayIndexReferenceDate\"           INTEGER,   -- REAL -> INTEGER\n\n        \"area\"                              TEXT,\n        \"project\"                           TEXT,\n        \"heading\"                           TEXT,      -- Renamed from \"actionGroup\"\n        \"contact\"                           TEXT,      -- Renamed from \"delegate\"\n\n        \"untrashedLeafActionsCount\"         INTEGER,\n        \"openUntrashedLeafActionsCount\"     INTEGER,\n\n        \"checklistItemsCount\"               INTEGER,\n        \"openChecklistItemsCount\"           INTEGER,\n\n        \"rt1_repeatingTemplate\"             TEXT,      -- Renamed from \"repeatingTemplate\"\n        \"rt1_recurrenceRule\"                BLOB,      -- Renamed from \"recurrenceRule\"\n        \"rt1_instanceCreationStartDate\"     INTEGER,   -- Renamed from \"instanceCreationStartDate\", REAL -> INTEGER\n        \"rt1_instanceCreationPaused\"        INTEGER,   -- Renamed from \"instanceCreationPaused\"\n        \"rt1_instanceCreationCount\"         INTEGER,   -- Renamed from \"instanceCreationCount\"\n        \"rt1_afterCompletionReferenceDate\"  INTEGER,   -- Renamed from \"afterCompletionReferenceDate\", REAL -> INTEGER\n        \"rt1_nextInstanceStartDate\"         INTEGER,   -- Renamed from \"nextInstanceStartDate\", REAL -> INTEGER\n\n        \"experimental\"                      BLOB,\n\n        \"repeater\"                          BLOB,\n        \"repeaterMigrationDate\"             REAL\n    )",
+      "tbl_name": "TMTask",
+      "type": "table"
+    },
+    {
+      "name": "TMTaskTag",
+      "sql": "CREATE TABLE 'TMTaskTag' (                                                     'tasks'                TEXT NOT NULL,                                                        'tags'                 TEXT NOT NULL                                                         )",
+      "tbl_name": "TMTaskTag",
+      "type": "table"
+    },
+    {
+      "name": "TMTombstone",
+      "sql": "CREATE TABLE 'TMTombstone' (                                                            'uuid'          TEXT PRIMARY KEY,                                                                 'deletionDate'  REAL,                                                                             'deletedObjectUUID' TEXT                                                                      )",
+      "tbl_name": "TMTombstone",
+      "type": "table"
+    },
+    {
+      "name": "ThingsTouch_ExtensionCommandStore_Commands",
+      "sql": "CREATE TABLE \"ThingsTouch_ExtensionCommandStore_Commands\" (\n\"id\" INTEGER PRIMARY KEY AUTOINCREMENT,\n\"type\" TEXT,\n\"body\" BLOB\n)",
+      "tbl_name": "ThingsTouch_ExtensionCommandStore_Commands",
+      "type": "table"
+    },
+    {
+      "name": "ThingsTouch_ExtensionCommandStore_Meta",
+      "sql": "CREATE TABLE \"ThingsTouch_ExtensionCommandStore_Meta\" (\n\"key\" TEXT PRIMARY KEY,\n\"value\" BLOB\n)",
+      "tbl_name": "ThingsTouch_ExtensionCommandStore_Meta",
+      "type": "table"
+    },
+    {
+      "name": "sqlite_sequence",
+      "sql": "CREATE TABLE sqlite_sequence(name,seq)",
+      "tbl_name": "sqlite_sequence",
+      "type": "table"
+    }
+  ],
+  "sqlite_metadata": {
+    "application_id": 0,
+    "encoding": "UTF-8",
+    "schema_version": 8,
+    "user_version": 0
+  },
+  "tables": [
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "entityType",
+          "notnull": 1,
+          "pk": 1,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "id",
+          "notnull": 1,
+          "pk": 2,
+          "type": "BLOB"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "changeToken",
+          "notnull": 1,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "expansionCursor",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "entityType",
+              "seqno": 0
+            },
+            {
+              "cid": 1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "id",
+              "seqno": 1
+            }
+          ],
+          "name": "index_BSSpotlightDirtyEntity_expansionCursor",
+          "origin": "c",
+          "partial": 1,
+          "seq": 0,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "entityType",
+              "seqno": 0
+            },
+            {
+              "cid": 1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "id",
+              "seqno": 1
+            },
+            {
+              "cid": 2,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": "changeToken",
+              "seqno": 2
+            },
+            {
+              "cid": 3,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": "expansionCursor",
+              "seqno": 3
+            }
+          ],
+          "name": "sqlite_autoindex_BSSpotlightDirtyEntity_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 1,
+          "unique": 1
+        }
+      ],
+      "name": "BSSpotlightDirtyEntity",
+      "ncol": 4,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 1
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "id",
+          "notnull": 0,
+          "pk": 1,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "updateState",
+          "notnull": 1,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 2,
+          "dflt_value": "0",
+          "hidden": 0,
+          "name": "isEnabled",
+          "notnull": 1,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "wholeIndexUpdateToken",
+          "notnull": 1,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "wholeIndexExpansionCursor",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 5,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "staticEntitiesUpdateToken",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 6,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "lastCheckpointID",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "name": "BSSpotlightIndexState",
+      "ncol": 7,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "value",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_BSSyncronyMetadata_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "BSSyncronyMetadata",
+      "ncol": 2,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "key",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "value",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "key",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_Meta_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "Meta",
+      "ncol": 2,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "title",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "visible",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "index",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "cachedTags",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 5,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "experimental",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMArea_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "TMArea",
+      "ncol": 6,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "areas",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "tags",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "areas",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMAreaTag_areas",
+          "origin": "c",
+          "partial": 0,
+          "seq": 0,
+          "unique": 0
+        }
+      ],
+      "name": "TMAreaTag",
+      "ncol": 2,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "userModificationDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "creationDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "title",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "status",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 5,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "stopDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 6,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "index",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 7,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "task",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 8,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "leavesTombstone",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 9,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "experimental",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 7,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "task",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMChecklistItem_task",
+          "origin": "c",
+          "partial": 0,
+          "seq": 0,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMChecklistItem_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 1,
+          "unique": 1
+        }
+      ],
+      "name": "TMChecklistItem",
+      "ncol": 10,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "displayName",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "firstName",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "lastName",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "emails",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 5,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "appleAddressBookId",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 6,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "index",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMContact_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "TMContact",
+      "ncol": 7,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "value",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMMetaItem_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "TMMetaItem",
+      "ncol": 2,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "logInterval",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "manualLogDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "groupTodayByParent",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uriSchemeAuthenticationToken",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 5,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "experimental",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMSettings_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "TMSettings",
+      "ncol": 6,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "title",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "index",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "definition",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "experimental",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMSmartList_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "TMSmartList",
+      "ncol": 5,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "title",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "shortcut",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "usedDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "parent",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 5,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "index",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 6,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "experimental",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMTag_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "TMTag",
+      "ncol": 7,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "leavesTombstone",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "creationDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "userModificationDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "type",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 5,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "status",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 6,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "stopDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 7,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "trashed",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 8,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "title",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 9,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "notes",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 10,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "notesSync",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 11,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "cachedTags",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 12,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "start",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 13,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "startDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 14,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "startBucket",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 15,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "reminderTime",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 16,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "lastReminderInteractionDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 17,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "deadline",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 18,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "deadlineSuppressionDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 19,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "t2_deadlineOffset",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 20,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "index",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 21,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "todayIndex",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 22,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "todayIndexReferenceDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 23,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "area",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 24,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "project",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 25,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "heading",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 26,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "contact",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 27,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "untrashedLeafActionsCount",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 28,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "openUntrashedLeafActionsCount",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 29,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "checklistItemsCount",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 30,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "openChecklistItemsCount",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 31,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "rt1_repeatingTemplate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 32,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "rt1_recurrenceRule",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 33,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "rt1_instanceCreationStartDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 34,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "rt1_instanceCreationPaused",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 35,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "rt1_instanceCreationCount",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 36,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "rt1_afterCompletionReferenceDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 37,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "rt1_nextInstanceStartDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 38,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "experimental",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 39,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "repeater",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        },
+        {
+          "cid": 40,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "repeaterMigrationDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 23,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "area",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMTask_area",
+          "origin": "c",
+          "partial": 0,
+          "seq": 3,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 25,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "heading",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMTask_heading",
+          "origin": "c",
+          "partial": 0,
+          "seq": 4,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMTask_id_where_recurrenceRuleNotNull",
+          "origin": "c",
+          "partial": 1,
+          "seq": 2,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 24,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "project",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMTask_project",
+          "origin": "c",
+          "partial": 0,
+          "seq": 5,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 31,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "rt1_repeatingTemplate",
+              "seqno": 0
+            },
+            {
+              "cid": 2,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "creationDate",
+              "seqno": 1
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 2
+            }
+          ],
+          "name": "index_TMTask_repeatingTemplate_and_creationDate",
+          "origin": "c",
+          "partial": 0,
+          "seq": 1,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 6,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "stopDate",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMTask_stopDate",
+          "origin": "c",
+          "partial": 0,
+          "seq": 6,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 3,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "userModificationDate",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMTask_userModificationDate",
+          "origin": "c",
+          "partial": 0,
+          "seq": 0,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMTask_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 7,
+          "unique": 1
+        }
+      ],
+      "name": "TMTask",
+      "ncol": 41,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "tasks",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "tags",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "tasks",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMTaskTag_tasks",
+          "origin": "c",
+          "partial": 0,
+          "seq": 0,
+          "unique": 0
+        }
+      ],
+      "name": "TMTaskTag",
+      "ncol": 2,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "uuid",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "deletionDate",
+          "notnull": 0,
+          "pk": 0,
+          "type": "REAL"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "deletedObjectUUID",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 2,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "deletedObjectUUID",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "index_TMTombstone_deletedObjectUUID",
+          "origin": "c",
+          "partial": 0,
+          "seq": 0,
+          "unique": 0
+        },
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "uuid",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_TMTombstone_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 1,
+          "unique": 1
+        }
+      ],
+      "name": "TMTombstone",
+      "ncol": 3,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "id",
+          "notnull": 0,
+          "pk": 1,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "type",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "body",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "name": "ThingsTouch_ExtensionCommandStore_Commands",
+      "ncol": 3,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "key",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "value",
+          "notnull": 0,
+          "pk": 0,
+          "type": "BLOB"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            {
+              "cid": 0,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 1,
+              "name": "key",
+              "seqno": 0
+            },
+            {
+              "cid": -1,
+              "coll": "BINARY",
+              "desc": 0,
+              "key": 0,
+              "name": null,
+              "seqno": 1
+            }
+          ],
+          "name": "sqlite_autoindex_ThingsTouch_ExtensionCommandStore_Meta_1",
+          "origin": "pk",
+          "partial": 0,
+          "seq": 0,
+          "unique": 1
+        }
+      ],
+      "name": "ThingsTouch_ExtensionCommandStore_Meta",
+      "ncol": 2,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "type",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "name",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "tbl_name",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "rootpage",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INT"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "sql",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "name": "sqlite_schema",
+      "ncol": 5,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    },
+    {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "name",
+          "notnull": 0,
+          "pk": 0,
+          "type": ""
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "hidden": 0,
+          "name": "seq",
+          "notnull": 0,
+          "pk": 0,
+          "type": ""
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [],
+      "name": "sqlite_sequence",
+      "ncol": 2,
+      "schema": "main",
+      "strict": 0,
+      "type": "table",
+      "wr": 0
+    }
+  ]
+}
