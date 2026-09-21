@@ -1,0 +1,32 @@
+# Local/private evidence; never publish database copies or account data
+private/
+evidence/
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.thingsdatabase/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Build and editor state
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.DS_Store
+.idea/
