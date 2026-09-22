@@ -7,7 +7,7 @@ import plistlib
 import re
 import sqlite3
 from .copies import (CopyError, backup, canonical, checked, detached, digest, durable, identity, load, lock, new_root, verify_copy)
-from .copies import exact_keys, absolute_text, hash_text, root_identity, identity_schema, import_schema, bounded_supplier
+from .copies import exact_keys, absolute_text, hash_text, root_identity, identity_schema, import_schema, bounded_supplier, sqlite_handle_scope, sql_budget
 from .fingerprint import snapshot
 from .schema_policy import verify_schema
 
@@ -72,7 +72,8 @@ def parse_plan(text):
 
 
 def target(path, plan):
-    with closing(sqlite3.connect(detached(path).as_uri()+'?mode=ro',uri=True)) as c:
+    path = detached(path)
+    with sqlite_handle_scope(path), closing(sqlite3.connect(path.as_uri()+'?mode=ro',uri=True)) as c, sql_budget(c):
         c.row_factory=sqlite3.Row
         version=c.execute("SELECT value FROM Meta WHERE key='databaseVersion'").fetchone()
         encoded = version[0].encode('utf-8') if version and type(version[0]) is str else (version[0] if version else b'')

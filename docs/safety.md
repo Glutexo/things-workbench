@@ -45,6 +45,16 @@ not a generic base-loss exemption. Known supplier lifecycle is rechecked across
 imports; a complete filename alone never releases an interrupted output.
 Frozen failures and quarantines must not be cleared or reused as approved input.
 
+## Private transactional rehearsal
+
+The [Stage-3 development capability](private-transactional-publication.md) can
+write an existing tool-created private target in place. It is DELETE-only,
+requires a distinct destination approval and retains target-level quarantine
+through uncertainty. Receipt-only status does not open SQLite. Reconciliation
+is separately authorized; restoration creates a new private copy only.
+True-live publication is unconditionally sealed-disabled. Stage-2 acceptance
+and synthetic tests do not imply complete Stage-3 release acceptance.
+
 ## Evidence retained privately
 
 The catalog review retains the executed query trace, app-plist provenance, raw structural capture, before/after source hashes, reproducibility checks and publication-audit results outside the repository under restricted permissions. No live application payloads were queried for this catalog; the one `Meta.databaseVersion` lookup is explicitly allowlisted. This is not a test of native writes, synchronization or UI behavior.

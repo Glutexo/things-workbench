@@ -116,6 +116,109 @@ class RuntimeBindingTests(unittest.TestCase):
         self.assertIn('compiler_identities', record['toolchain'])
         self.assertIn('sdk_settings', record['toolchain'])
 
+    def test_genuine_sized_runtime_build_roundtrip_keeps_complete_closure(self):
+        # Match the observed 20-image / 15,379-edge shape, not private paths.
+        from things_workbench import copies
+        prefix = '/synthetic/' + 'framework-layout/' * 8
+        images = {prefix + str(i): {'identity': {'path': prefix + str(i),
+                  'device': 1, 'inode': i, 'size': 32, 'sha256': '1' * 64},
+                  'slices': {'16777228:0': {'dependencies': [], 'rpaths': []}}}
+                  for i in range(20)}
+        edges = [{'loader': prefix + str(i % 20), 'arch': '16777228:0',
+                  'executable': prefix + 'wording', 'rpaths': [prefix, prefix + 'nested'],
+                  'name': '@rpath/ThingsModel.framework/ThingsModel', 'command': 12,
+                  'target': prefix + str((i + 1) % 20)} for i in range(15379)]
+        closure = {'version': 1, 'roots': [prefix + 'wording'], 'images': images,
+                   'edges': edges, 'os_images': ['/usr/lib/libSystem.B.dylib'],
+                   'os_roots': [str(p) for p in nr.OS_ROOTS], 'absent_rpaths': []}
+        self.assertGreater(len(copies.canonical(closure)), 11309313)
+        self.assertLess(len(copies.canonical(closure)), 16777216)
+        self.closure_mock.return_value = closure
+        def compile_fixture(argv, **kwargs):
+            Path(argv[argv.index('-o') + 1]).write_bytes(macho_bytes())
+            return nr.subprocess.CompletedProcess(argv, 0, b'', b'')
+        with patch.object(nr, 'stopped'), \
+             patch.object(nr, 'toolchain_receipt', return_value=self.manifest['toolchain']), \
+             patch.object(nr.subprocess, 'run', side_effect=compile_fixture):
+            root = nr.build(self.manifest['app'], self.root / 'large-runtime')
+        result = nr.verify(root)
+        self.assertEqual(result['dependencies'], closure)
+        self.assertEqual(len(result['dependencies']['images']), 20)
+        self.assertEqual(len(result['dependencies']['edges']), 15379)
+        self.assertEqual(result['sources'], self.source_pins)
+        self.closure_mock.return_value = {**closure, 'edges': edges[:-1]}
+        with self.assertRaisesRegex(CopyError, 'dependency'):
+            nr.verify(root)
+
+    def test_record_kind_limits_are_symmetric_and_not_filename_authority(self):
+        from things_workbench import copies
+        self.assertEqual(copies.MAX_RECORD_BYTES, 4194304)
+        self.assertEqual(copies.MAX_NATIVE_RUNTIME_RECORD_BYTES, 16777216)
+        for kind, limit in [(None, 4194304), ('native-runtime', 16777216)]:
+            for extra in (0, 1):
+                value = copy.deepcopy(self.manifest) if kind else {'padding': ''}
+                key = 'os' if kind else 'padding'
+                value[key] = ''
+                value[key] = 'x' * (limit + extra - len(copies.canonical(value)))
+                path = self.runtime / ('bounded-' + str(kind) + str(extra) + '.json')
+                if extra:
+                    with self.assertRaisesRegex(CopyError, 'record byte budget'):
+                        copies.durable(path, value, record_kind=kind)
+                    self.assertFalse(path.exists())
+                    path.write_bytes(copies.canonical(value)); path.chmod(0o600)
+                    with self.assertRaisesRegex(CopyError, 'record byte budget'):
+                        copies.load(path, record_kind=kind)
+                else:
+                    copies.durable(path, value, record_kind=kind)
+                    self.assertEqual(copies.load(path, record_kind=kind), value)
+        value = {**self.manifest, 'os': 'x' * 4194304}
+        path = self.runtime / 'runtime.json'
+        with self.assertRaisesRegex(CopyError, 'record byte budget'):
+            copies.durable(path, value)
+        copies.durable(path, value, record_kind='native-runtime')
+        with self.assertRaisesRegex(CopyError, 'record byte budget'):
+            copies.load(path)
+        self.assertEqual(copies.load(path, record_kind='native-runtime'), value)
+
+    def test_native_record_kind_preserves_schema_and_json_refusals(self):
+        from things_workbench import copies
+        bad = [None, [], {}, {**self.manifest, 'version': True},
+               {**self.manifest, 'dependencies': []}, {**self.manifest, 'sources': {}},
+               {**self.manifest, 'root': str(self.root)},
+               {**self.manifest, 'python': {**self.manifest['python'], 'sha256': 1}}]
+        for index, value in enumerate(bad):
+            path = self.runtime / ('malformed-' + str(index) + '.json')
+            with self.assertRaises(CopyError):
+                copies.durable(path, value, record_kind='native-runtime')
+            self.assertFalse(path.exists())
+            path.write_bytes(copies.canonical(value)); path.chmod(0o600)
+            with self.assertRaises(CopyError):
+                copies.load(path, record_kind='native-runtime')
+        for index, payload in enumerate((b'{"version":2,"version":2}', b'[' * 65 + b']' * 65, b'NaN')):
+            path = self.runtime / ('bad-json-' + str(index))
+            path.write_bytes(payload); path.chmod(0o600)
+            with self.assertRaises(CopyError):
+                copies.load(path, record_kind='native-runtime')
+        path = self.runtime / 'kinds.json'
+        copies.durable(path, {})
+        for kind in (True, 16777216, [], {}, 'runtime.json', 'other'):
+            with self.assertRaisesRegex(CopyError, 'unknown record kind'):
+                copies.durable(self.runtime / 'never-created', {}, record_kind=kind)
+            with self.assertRaisesRegex(CopyError, 'unknown record kind'):
+                copies.load(path, record_kind=kind)
+
+    def test_native_record_bytes_still_charge_shared_work_budget(self):
+        from things_workbench import copies
+        path = self.runtime / 'budget.json'
+        copies.durable(path, self.manifest, record_kind='native-runtime')
+        for operation in (lambda: copies.load(path, record_kind='native-runtime'),
+                          lambda: copies.durable(self.runtime / 'never-written', self.manifest,
+                                                 record_kind='native-runtime')):
+            with self.assertRaisesRegex(CopyError, 'cumulative'):
+                with patch.object(copies, 'MAX_WORK_BYTES', 1), copies.work_scope():
+                    operation()
+        self.assertFalse((self.runtime / 'never-written').exists())
+
     def test_stopped_inspection_environment_is_sanitized(self):
         completed = nr.subprocess.CompletedProcess([], 1)
         with patch.object(nr.subprocess, 'run', return_value=completed) as run, \

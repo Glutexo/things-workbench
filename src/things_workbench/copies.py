@@ -14,9 +14,135 @@ import ctypes
 import errno
 from functools import lru_cache, wraps
 from contextvars import ContextVar
+import threading
+import time
 
 
 _supplier_chain: ContextVar[tuple] = ContextVar('supplier_chain', default=())
+_work_budget: ContextVar[dict | None] = ContextVar('work_budget', default=None)
+MAX_SNAPSHOT_ROWS = 500000
+MAX_FILE_BYTES = 268435456
+MAX_RECORD_BYTES = 4194304
+MAX_NATIVE_RUNTIME_RECORD_BYTES = 16777216
+MAX_WORK_BYTES = 8589934592
+MAX_SNAPSHOT_BYTES = 268435456
+MAX_WORK_ROWS = 8000000
+MAX_PATH_ENTRIES = 4096
+MAX_DEPENDENCY_DEPTH = 64
+
+
+def bounded_paths(root):
+    paths = []
+    for path in root.rglob('*'):
+        check_budget()
+        if len(paths) >= MAX_PATH_ENTRIES: raise CopyError('runtime path budget exceeded')
+        paths.append(path)
+    return sorted(paths)
+
+
+@contextmanager
+def work_scope():
+    """Nested provenance shares the outer deadline, never refreshes it."""
+    current = _work_budget.get()
+    token = None
+    if current is None:
+        token = _work_budget.set({'deadline': time.monotonic() + 120, 'bytes': 0, 'rows': 0})
+    try:
+        check_budget()
+        yield
+        check_budget()
+    finally:
+        if token is not None: _work_budget.reset(token)
+
+
+def bounded_work(function):
+    @wraps(function)
+    def bounded(*args, **kwargs):
+        with work_scope(): return function(*args, **kwargs)
+    return bounded
+
+
+def check_budget(*, byte_count=0, row_count=0):
+    budget = _work_budget.get()
+    if budget is not None:
+        budget['bytes'] += byte_count
+        budget['rows'] += row_count
+        if time.monotonic() > budget['deadline'] or budget['bytes'] > MAX_WORK_BYTES or budget['rows'] > MAX_WORK_ROWS:
+            raise CopyError('cumulative work budget exceeded')
+
+
+def work_deadline():
+    check_budget()
+    budget = _work_budget.get()
+    if budget is None: raise CopyError('missing work budget')
+    return budget['deadline']
+
+
+@contextmanager
+def sql_budget(db):
+    """Own the progress-handler slot, but never the caller transaction."""
+    with work_scope():
+        deadline = work_deadline()
+        db.set_progress_handler(lambda: int(time.monotonic() > deadline), 1000)
+        try:
+            yield
+            check_budget()
+        except sqlite3.Error:
+            check_budget()  # Preserve genuine extended errors unless expired.
+            raise
+        finally:
+            db.set_progress_handler(None, 0)
+_active_sqlite = {}
+_file_lifetimes = threading.RLock()
+
+
+@contextmanager
+def raw_read_scope(path):
+    """Serialize check/open/close against SQL lifetime registration process-wide.
+
+    The caller must close every raw handle before leaving this scope. This
+    coordinates tool-owned I/O only, not arbitrary external Python code.
+    """
+    if not _file_lifetimes.acquire(timeout=5): raise CopyError('file lifetime coordination busy')
+    try:
+        assert_not_sqlite_alias(path)
+        if Path(path).stat().st_size > MAX_FILE_BYTES: raise CopyError('file byte budget exceeded')
+        yield
+    finally:
+        _file_lifetimes.release()
+
+
+@contextmanager
+def sqlite_handle_scope(path):
+    """Reject raw payload reads of main/SHM aliases until ALL SQL handles close."""
+    path = Path(path)
+    if not _file_lifetimes.acquire(timeout=5): raise CopyError('file lifetime coordination busy')
+    token = object()
+    try:
+        s = path.stat()
+        _active_sqlite[token] = (str(path), s.st_dev, s.st_ino)
+    finally:
+        _file_lifetimes.release()
+    try:
+        yield
+    finally:
+        with _file_lifetimes:
+            del _active_sqlite[token]
+
+
+def assert_not_sqlite_alias(path):
+    if not _active_sqlite: return
+    path = Path(path)
+    s = path.stat()
+    for name, device, inode in tuple(_active_sqlite.values()):
+        if (s.st_dev, s.st_ino) == (device, inode):
+            raise CopyError('raw read of active SQLite file refused')
+        for suffix in ('-shm', '-wal', '-journal'):
+            side = Path(name+suffix)
+            if side.exists():
+                side_s = side.stat()
+                if (s.st_dev, s.st_ino) == (side_s.st_dev, side_s.st_ino):
+                    raise CopyError('raw read of active SQLite sidecar refused')
 
 
 def bounded_supplier(function):
@@ -101,9 +227,20 @@ def _acl_library():
     return lib
 
 
-def inspect_acl(path):
+def _acl_security(s):
+    if stat.S_ISLNK(s.st_mode) or s.st_uid not in (0, os.getuid()):
+        raise CopyError('unsafe path component')
+    if s.st_mode & 0o022 and not (stat.S_ISDIR(s.st_mode) and s.st_mode & stat.S_ISVTX):
+        raise CopyError('writable path component')
+    return (s.st_dev, s.st_ino, s.st_mode, s.st_uid, s.st_gid, s.st_flags)
+
+
+def inspect_acl(path, *, expected=None):
     """Refuse granting/inherited ACLs without rewriting any source ACL.
 
+    Only unstable ACL-absence observations get at most three whole inspections.
+    Pin identity and security metadata across attempts, including checked's stat;
+    a fresh stable ctime alone must never accept an intervening security change.
     Deny-only ancestor ACLs grant no access. Inspection errors fail closed.
     """
     if sys.platform != 'darwin':
@@ -112,36 +249,56 @@ def inspect_acl(path):
         lib = _acl_library()
     except (OSError, AttributeError) as exc:
         raise CopyError('ACL inspection unavailable') from exc
-    before = Path(path).lstat()
-    ctypes.set_errno(0)
-    acl = lib.acl_get_link_np(os.fsencode(path), 0x100)
-    if not acl:
-        # Darwin returns ENOENT for an existing object with no extended ACL.
-        # Recheck the object so a missing/replaced pathname is never that case.
-        after = Path(path).lstat()
-        if ctypes.get_errno() == errno.ENOENT and (before.st_dev, before.st_ino, before.st_ctime_ns) == (after.st_dev, after.st_ino, after.st_ctime_ns):
+    baseline = _acl_security(expected) if expected is not None else None
+    for attempt in range(3):
+        check_budget()  # Reuse, never refresh, the caller's work deadline.
+        before = Path(path).lstat()
+        security = _acl_security(before)
+        if baseline is None:
+            baseline = security
+        if security != baseline:
+            raise CopyError('ACL path identity or permissions changed')
+        ctypes.set_errno(0)
+        acl = lib.acl_get_link_np(os.fsencode(path), 0x100)
+        error = ctypes.get_errno()  # Retain errno before any further calls.
+        if not acl:
+            # Darwin ENOENT means no extended ACL only on a verified object.
+            if error != errno.ENOENT:
+                raise CopyError('ACL inspection failed')
+            after = Path(path).lstat()
+            if _acl_security(after) != baseline:
+                raise CopyError('ACL path identity or permissions changed')
+            check_budget()
+            if before.st_ctime_ns == after.st_ctime_ns:
+                return
+            continue  # Reinspect ACL AND metadata; never retry a mutation.
+        try:
+            if lib.acl_valid(acl) != 0:
+                raise CopyError('invalid ACL')
+            index = 0
+            while True:
+                entry = ctypes.c_void_p()
+                ctypes.set_errno(0)
+                if lib.acl_get_entry(acl, index, ctypes.byref(entry)) != 0:
+                    if ctypes.get_errno() == errno.EINVAL:
+                        break  # Darwin end-of-valid-ACL is EINVAL, not POSIX 0.
+                    raise CopyError('ACL entry inspection failed')
+                tag = ctypes.c_int()
+                if lib.acl_get_tag_type(entry, ctypes.byref(tag)) != 0 or tag.value != 2:
+                    raise CopyError('granting or unknown ACL refused')
+                index = -1  # ACL_NEXT_ENTRY
+            after = Path(path).lstat()
+            if _acl_security(after) != baseline or before.st_ctime_ns != after.st_ctime_ns:
+                raise CopyError('ACL observation changed')
+            check_budget()
             return
-        raise CopyError('ACL inspection failed')
-    try:
-        if lib.acl_valid(acl) != 0:
-            raise CopyError('invalid ACL')
-        index = 0
-        while True:
-            entry = ctypes.c_void_p()
-            ctypes.set_errno(0)
-            if lib.acl_get_entry(acl, index, ctypes.byref(entry)) != 0:
-                if ctypes.get_errno() == errno.EINVAL:
-                    break  # Darwin end-of-valid-ACL is EINVAL, not POSIX 0.
-                raise CopyError('ACL entry inspection failed')
-            tag = ctypes.c_int()
-            if lib.acl_get_tag_type(entry, ctypes.byref(tag)) != 0 or tag.value != 2:
-                raise CopyError('granting or unknown ACL refused')
-            index = -1  # ACL_NEXT_ENTRY
-    finally:
-        lib.acl_free(acl)
+        finally:
+            lib.acl_free(acl)
+    raise CopyError('ACL inspection unstable')
 
 
 def checked(path, *, directory=False, private=True):
+    check_budget()
     path = Path(os.path.abspath(path))
     if any(p.casefold() in ('containers', 'group containers', 'keychains', 'things-offline-lab') for p in path.parts):
         raise CopyError('forbidden source location')
@@ -161,11 +318,7 @@ def checked(path, *, directory=False, private=True):
             raise CopyError('path unavailable') from exc
         if (s.st_dev, s.st_ino) in forbidden:
             raise CopyError('forbidden physical ancestor')
-        if stat.S_ISLNK(s.st_mode) or s.st_uid not in (0, os.getuid()):
-            raise CopyError('unsafe path component')
-        if s.st_mode & 0o022 and not (stat.S_ISDIR(s.st_mode) and s.st_mode & stat.S_ISVTX):
-            raise CopyError('writable path component')
-        inspect_acl(part)
+        inspect_acl(part, expected=s)
     s = path.stat()
     if directory:
         if not stat.S_ISDIR(s.st_mode) or s.st_uid != os.getuid() or stat.S_IMODE(s.st_mode) != 0o700:
@@ -208,8 +361,15 @@ def parent_handle(path):
             os.close(fd)
 
 
-def _read_file(path, *, private=True, collect=False):
+def _read_file(path, *, private=True, collect=False, prefix=None):
     path = checked(path, private=private)
+    with raw_read_scope(path):
+        return _read_file_guarded(path, private=private, collect=collect, prefix=prefix)
+
+
+def _read_file_guarded(path, *, private=True, collect=False, prefix=None):
+    path = checked(path, private=private)
+    assert_not_sqlite_alias(path)
     initial = path.lstat()
     with parent_handle(path) as parent:
         fd = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
@@ -218,7 +378,10 @@ def _read_file(path, *, private=True, collect=False):
             if _file_stamp(initial) != _file_stamp(s) or not stat.S_ISREG(s.st_mode) or s.st_nlink != 1:
                 raise CopyError('file changed before read')
             h, chunks = hashlib.sha256(), []
-            while block := os.read(fd, 1024 * 1024):
+            remaining = s.st_size if prefix is None else prefix
+            while remaining and (block := os.read(fd, min(remaining, 1024 * 1024))):
+                check_budget(byte_count=len(block))
+                remaining -= len(block)
                 h.update(block)
                 if collect: chunks.append(block)
             checked(path, private=private)
@@ -238,6 +401,10 @@ def read_bytes(path):
     return _read_file(path, collect=True)[1]
 
 
+def read_header(path):
+    return _read_file(path, collect=True, prefix=100)[1]
+
+
 def detached(path):
     path = checked(path)
     for suffix in ('-wal', '-shm', '-journal'):
@@ -250,6 +417,7 @@ def detached(path):
 
 
 def canonical(value):
+    check_budget()
     return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
 
 
@@ -257,11 +425,27 @@ def digest(value):
     return hashlib.sha256(canonical(value)).hexdigest()
 
 
-def durable(path, value):
+def _record_limit(record_kind):
+    if record_kind is None: return MAX_RECORD_BYTES
+    if type(record_kind) is str and record_kind == 'native-runtime':
+        return MAX_NATIVE_RUNTIME_RECORD_BYTES
+    raise CopyError('unknown record kind')
+
+
+def _record_schema(path, value, record_kind):
+    if record_kind == 'native-runtime':
+        from .native_runtime import _schema
+        _schema(value, Path(os.path.abspath(path)).parent)
+
+
+def durable(path, value, *, record_kind=None):
     """Exclusive, private, FD-bound durable record; never overwrite approvals."""
     path = Path(os.path.abspath(path))
     checked(path.parent, directory=True)
     payload = canonical(value)
+    if len(payload) > _record_limit(record_kind): raise CopyError('record byte budget exceeded')
+    _record_schema(path, value, record_kind)
+    check_budget(byte_count=len(payload))
     with parent_handle(path) as parent:
         fd = os.open(path.name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=parent)
         try:
@@ -279,8 +463,10 @@ def durable(path, value):
             os.close(fd)
 
 
-def load(path):
+def load(path, *, record_kind=None):
     checked(path)
+    limit = _record_limit(record_kind)
+    if Path(path).stat().st_size > limit: raise CopyError('record byte budget exceeded')
     def unique(pairs):
         result = {}
         for k, v in pairs:
@@ -289,12 +475,27 @@ def load(path):
             result[k] = v
         return result
     try:
-        value = json.loads(read_bytes(path), object_pairs_hook=unique)
+        payload = read_bytes(path)
+        if len(payload) > limit: raise CopyError('record byte budget exceeded')
+        # Count structural depth outside strings BEFORE recursive JSON parsing.
+        depth = 0; quoted = False; escaped = False
+        for byte in payload:
+            if quoted:
+                if escaped: escaped = False
+                elif byte == 92: escaped = True
+                elif byte == 34: quoted = False
+            elif byte == 34: quoted = True
+            elif byte in (91, 123):
+                depth += 1
+                if depth > 64: raise CopyError('JSON depth budget exceeded')
+            elif byte in (93, 125): depth -= 1
+        value = json.loads(payload, object_pairs_hook=unique)
         canonical(value)  # Reject NaN/Infinity, including exponent overflow.
+        _record_schema(path, value, record_kind)
         return value
     except CopyError:
         raise
-    except (UnicodeError, ValueError) as exc:
+    except (UnicodeError, ValueError, RecursionError) as exc:
         raise CopyError('invalid JSON') from exc
 
 
@@ -313,6 +514,7 @@ def no_sidecars(path):
         raise CopyError('destination sidecar exists')
 
 
+@bounded_work
 def backup(source, destination):
     """Read a detached source; exclusively create a new private output only."""
     source = detached(source)
@@ -332,26 +534,31 @@ def backup(source, destination):
             # Both identities are checked immediately before SQLite pathname IO.
             if identity(source) != before:
                 raise CopyError('source drift before backup')
-            with closing(sqlite3.connect(source.as_uri() + '?mode=ro', uri=True, timeout=2)) as src:
+            with sqlite_handle_scope(source), closing(sqlite3.connect(source.as_uri() + '?mode=ro', uri=True, timeout=2)) as src:
                 src.execute('PRAGMA query_only=ON')
                 no_sidecars(destination)
                 checked(destination)
                 if (owned.st_dev, owned.st_ino) != (destination.lstat().st_dev, destination.lstat().st_ino):
                     raise CopyError('backup destination identity changed before connect')
-                with closing(sqlite3.connect(destination.as_uri() + '?mode=rw', uri=True, timeout=2)) as dst:
+                with sqlite_handle_scope(destination), closing(sqlite3.connect(destination.as_uri() + '?mode=rw', uri=True, timeout=2)) as dst:
                     # The new, exclusively owned output has no other readers.
                     # Exclusive SQLite locking avoids creating a persistent SHM
                     # carrier when backup inherits the source's WAL header.
                     if dst.execute('PRAGMA locking_mode=EXCLUSIVE').fetchone() != ('exclusive',):
                         raise CopyError('backup destination locking refused')
-                    src.backup(dst, pages=256)
+                    page_size = src.execute('PRAGMA page_size').fetchone()[0]
+                    def progress(status, remaining, total):
+                        check_budget()
+                        if total * page_size > MAX_FILE_BYTES: raise CopyError('backup byte budget exceeded')
+                    src.backup(dst, pages=256, progress=progress, sleep=.01)
                     # Backup inherits WAL mode. Finalize only this exclusively
                     # created destination through SQLite, never unlink sidecars
                     # or checkpoint the read-only supplier/source database.
                     if dst.execute('PRAGMA journal_mode=DELETE').fetchone() != ('delete',):
                         raise CopyError('backup destination could not detach')
-                    if dst.execute('PRAGMA integrity_check').fetchall() != [('ok',)]:
-                        raise CopyError('backup integrity refused')
+                    with sql_budget(dst):
+                        if dst.execute('PRAGMA integrity_check').fetchmany(2) != [('ok',)]:
+                            raise CopyError('backup integrity refused')
             no_sidecars(destination)
             checked(destination)
             end = destination.lstat()
@@ -370,6 +577,8 @@ def backup(source, destination):
 def supplier_state(source):
     """Known owned interruptions override the external supplier declaration."""
     source = detached(source)
+    if any(os.path.lexists(parent / 'target.json') for parent in source.parents):
+        raise CopyError('mutable publication target is never an importable supplier')
     if any(os.path.lexists(parent / 'failed.json') for parent in source.parents):
         raise CopyError('quarantined source ancestry')
     for parent in source.parents:

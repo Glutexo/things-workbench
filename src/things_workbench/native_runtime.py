@@ -8,13 +8,14 @@ import subprocess
 import sys
 import struct
 import stat
-from .copies import CopyError, checked, durable, identity, load, new_root, digest
+from .copies import CopyError, checked, durable, identity, load, new_root, digest, raw_read_scope, bounded_paths
 
 RESOURCE = Path(__file__).parent / 'native'
 ARTIFACTS = frozenset(('wording', 'scratch.dylib', 'canary'))
 REQUIRED_SOURCES = frozenset((
     '__init__.py', '__main__.py', 'cli.py', 'copy_cli.py', 'copies.py',
     'fingerprint.py', 'history.py', 'native_runtime.py', 'schema_policy.py', 'wording.py', 'note_representation.py',
+    'publication.py', 'publication_runtime.py', 'publication_cli.py',
     'native/canary.c', 'native/coordinator.swift', 'native/copy.sb',
     'native/date_324.h', 'native/scratch.c', 'native/wording.m',
     'native/schema_32400506.json',
@@ -105,19 +106,38 @@ PINS = {
 
 
 def sha(path):
-    with open(path,'rb') as f:
-        return hashlib.file_digest(f,'sha256').hexdigest()
+    with raw_read_scope(path), open(path,'rb') as f:
+        from . import copies
+        h = hashlib.sha256(); total = 0
+        while block := f.read(1024*1024):
+            total += len(block)
+            copies.check_budget(byte_count=len(block))
+            if total > copies.MAX_FILE_BYTES: raise CopyError('runtime byte budget exceeded')
+            h.update(block)
+        return h.hexdigest()
+
+
+def resource_bytes(path):
+    from . import copies
+    with raw_read_scope(path), open(path, 'rb') as f:
+        data = f.read(copies.MAX_FILE_BYTES + 1)
+        if len(data) > copies.MAX_FILE_BYTES: raise CopyError('runtime byte budget exceeded')
+        copies.check_budget(byte_count=len(data))
+        return data
 
 
 def stopped():
-    result = subprocess.run(['/usr/bin/pgrep','-x','Things3'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=environment(),close_fds=True,timeout=5)
+    try:
+        result = subprocess.run(['/usr/bin/pgrep','-x','Things3'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=environment(),close_fds=True,timeout=5)
+    except (subprocess.SubprocessError, OSError) as exc:
+        raise CopyError('process census unavailable; stopped state unproven') from exc
     if result.returncode != 1:
         raise CopyError('Things must remain stopped; no app control is performed')
 
 
 def sources():
     root = Path(__file__).parent
-    actual = {str(p.relative_to(root)) for p in root.rglob('*')
+    actual = {str(p.relative_to(root)) for p in bounded_paths(root)
               if '__pycache__' not in p.parts and not p.is_dir()}
     if actual != REQUIRED_SOURCES:
         raise CopyError('required package source/resource inventory mismatch')
@@ -134,7 +154,7 @@ def application(app):
     app = Path(os.path.abspath(app))
     if app.is_symlink() or not app.is_dir() or platform.machine() != 'arm64':
         raise CopyError('unsupported application or architecture')
-    info = plistlib.loads((app/'Contents/Info.plist').read_bytes())
+    info = plistlib.loads(resource_bytes(app/'Contents/Info.plist'))
     if info.get('CFBundleVersion') != '32400506' or info.get('CFBundleShortVersionString') != '3.24' or info.get('CFBundleIdentifier') != 'com.culturedcode.ThingsMac':
         raise CopyError('unsupported Things build')
     for key,expected in PINS.items():
@@ -144,7 +164,7 @@ def application(app):
     # Pin every regular resource and symlink target in the private framework tree,
     # not merely the six discovery binaries. System libraries are OS trust roots.
     result = {'Contents/Info.plist':sha(app/'Contents/Info.plist'),'Contents/MacOS/Things3':sha(app/'Contents/MacOS/Things3')}
-    for p in sorted((app/'Contents/Frameworks').rglob('*')):
+    for p in bounded_paths(app/'Contents/Frameworks'):
         resolved = p.resolve()
         if not resolved.is_relative_to(app.resolve()):
             raise CopyError('framework dependency escapes application')
@@ -214,7 +234,7 @@ def _thin_macho(data):
 def inspect_macho(path):
     """Parse bytes rather than trusting an otool transcript or shell output."""
     try:
-        data = Path(path).read_bytes()
+        data = resource_bytes(path)
     except OSError as exc:
         raise CopyError('Mach-O image unavailable') from exc
     if data[:4] not in (b'\xca\xfe\xba\xbe', b'\xca\xfe\xba\xbf', b'\xbe\xba\xfe\xca', b'\xbf\xba\xfe\xca'):
@@ -324,7 +344,10 @@ def dependency_closure(runtime, app, app_pins):
             return Path(name)
         raise CopyError('unresolved relative or nested rpath load name')
 
-    def visit(path, arch, executable, inherited):
+    def visit(path, arch, executable, inherited, depth=0):
+        from . import copies
+        copies.check_budget()
+        if depth > copies.MAX_DEPENDENCY_DEPTH: raise CopyError('dependency depth budget exceeded')
         path = canonical(path)
         if _os_path(path):
             if not _os_available(path):
@@ -380,7 +403,7 @@ def dependency_closure(runtime, app, app_pins):
                 edge = {'loader': str(path), 'arch': current_arch, 'executable': str(executable),
                         'rpaths': list(stack), 'name': name, 'command': dependency['command'], 'target': str(target)}
                 edges.append(edge)
-                visit(target, current_arch, executable, stack)
+                visit(target, current_arch, executable, stack, depth + 1)
 
     roots = [(runtime / 'wording', runtime / 'wording'),
              (runtime / 'scratch.dylib', runtime / 'wording'),
@@ -467,7 +490,7 @@ def build(app, destination):
         raise CopyError('build input drift')
     manifest = {'version':2,'state':'ready','layout':1,'root':str(root),'app':str(app),'application':app_pins,'sources':source_pins,'artifacts':{n:artifact_identity(root/n) for n in sorted(ARTIFACTS)},'commands':commands,'dependencies':dependencies,'toolchain':versions,'os':platform.platform(),'python':{'executable':sys.executable,'version':sys.version,'sha256':sha(sys.executable)}}
     _schema(manifest, root)
-    durable(root/'runtime.json',manifest)
+    durable(root/'runtime.json',manifest,record_kind='native-runtime')
     verify(root)
     return root
 
@@ -483,7 +506,7 @@ def artifact_identity(path):
 
 def verify(runtime):
     runtime = checked(runtime,directory=True)
-    manifest = load(runtime/'runtime.json')
+    manifest = load(runtime/'runtime.json',record_kind='native-runtime')
     _schema(manifest, runtime)
     if manifest['root'] != str(runtime) or manifest['sources'] != sources():
         raise CopyError('runtime source/header/profile drift')

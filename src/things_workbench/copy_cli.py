@@ -8,7 +8,7 @@ from . import copies, native_runtime, wording
 
 
 def main(argv):
-    p=argparse.ArgumentParser(prog='things-workbench',description='Experimental private copy-only tooling. Native acceptance is incomplete; no live/cloud support.')
+    p=argparse.ArgumentParser(prog='things-workbench',description='Experimental private copy-only tooling. Bounded wording/history subset; no live/cloud support.')
     commands=p.add_subparsers(dest='family',required=True)
     c=commands.add_parser('copies',description='Import a declared stable private detached copy; never discover live data.')
     sub=c.add_subparsers(dest='operation',required=True)
@@ -16,7 +16,7 @@ def main(argv):
     n=commands.add_parser('native',description='Explicit native copy helper build; nothing builds on import/help.')
     sub=n.add_subparsers(dest='operation',required=True)
     b=sub.add_parser('build'); b.add_argument('--app',required=True); b.add_argument('--output',required=True)
-    w=commands.add_parser('wording',description='Copy-only prepare, exact escaped preview and digest-approved apply-copy. Experimental: current fixture history is refused.')
+    w=commands.add_parser('wording',description='Copy-only prepare, exact escaped preview and digest-approved apply-copy. Only the documented bounded history subset is supported.')
     sub=w.add_subparsers(dest='operation',required=True)
     prep=sub.add_parser('prepare'); prep.add_argument('--copy',required=True); prep.add_argument('--plan',required=True); prep.add_argument('--packet',required=True); prep.add_argument('--runtime',required=True)
     prev=sub.add_parser('preview'); prev.add_argument('--packet',required=True)

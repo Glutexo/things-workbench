@@ -8,7 +8,8 @@ Things Workbench is initially a **read-only inspection project**, not a replacem
 2. **Physical catalog:** retain raw declarations separately from interpretations. Export no records, row counts, account data, file paths or collection timestamps. A format-version integer is the only allowlisted application metadata value in the documented inspection.
 3. **Interpretation:** report an unknown enum/encoding as unknown. Distinguish tasks, projects, headings, templates and occurrences without asserting every combination is supported. See [database index](database/index.md).
 4. **Experimental copy-only wording adapter:** separate explicit import, native prepare, exact preview and digest-bound apply-copy. Supplier lifecycle is verified recursively; same-target note representation requires a completed first output and a fresh native witness in the [conservative subset](experimental-copy-wording.md). No live publisher exists. Native model/history behavior, complete change scope and retained failure state cannot be replaced with a generic SQL update layer.
-5. **Future synchronization adapters:** also out of scope. Local staging, remote acceptance, local publication and another device's view are separate claims.
+5. **Private transactional rehearsal:** completed Stage-2 evidence can be transferred into an existing tool-created private DELETE-mode target, under same-writer full CAS, durable backup/intent and explicit reconciliation. See [development boundaries](private-transactional-publication.md). No live adapter or mutable-target export is enabled.
+6. **Future synchronization adapters:** also out of scope. Local staging, remote acceptance, local publication and another device's view are separate claims.
 
 ## Dependency boundary
 
